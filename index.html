@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPA Calculator & Forecaster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .input-group:focus-within label {
+            color: #3b82f6;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-slate-800">Academic Forecaster</h1>
+            <p class="text-slate-500 mt-2">Track your marks and predict your path to success.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Course List -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-slate-700">Your Courses</h2>
+                    <button onclick="addCourse()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        + Add Course
+                    </button>
+                </div>
+
+                <div id="courseContainer" class="space-y-4">
+                    <!-- Courses injected here -->
+                </div>
+            </div>
+
+            <!-- Right Column: Summary & Target -->
+            <div class="space-y-6">
+                <div class="card p-6 sticky top-8">
+                    <h2 class="text-lg font-semibold text-slate-700 mb-4">Overall Performance</h2>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500">Current GPA</span>
+                            <span id="currentGPA" class="text-2xl font-bold text-blue-600">0.00</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2">
+                            <div id="gpaProgress" class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <div class="pt-4 border-t border-slate-100">
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target GPA</label>
+                            <input type="number" id="targetGPA" value="9.0" step="0.1" min="0" max="10" 
+                                   class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                   onchange="updateCalculations()">
+                        </div>
+                    </div>
+
+                    <div id="forecastSummary" class="mt-6 p-4 bg-blue-50 rounded-xl hidden">
+                        <p class="text-sm text-blue-800 leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="notification" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center space-x-3">
+        <span id="notificationText"></span>
+    </div>
+
+    <script>
+        let courses = [
+            {
+                id: Date.now(),
+                code: '2301101T',
+                name: 'Calculus and DE',
+                credits: 3,
+                assessments: [
+                    { name: 'IA 1', weight: 15, marks: 0 },
+                    { name: 'IA 2', weight: 15, marks: 0 },
+                    { name: 'Mid Sem', weight: 20, marks: 0 },
+                    { name: 'End Sem', weight: 50, marks: 0 }
+                ]
+            }
+        ];
+
+        const gradingScale = [
+            { grade: 'AA', points: 10, min: 80 },
+            { grade: 'AB', points: 9, min: 70 },
+            { grade: 'BB', points: 8, min: 60 },
+            { grade: 'BC', points: 7, min: 55 },
+            { grade: 'CC', points: 6, min: 50 },
+            { grade: 'CD', points: 5, min: 45 },
+            { grade: 'DD', points: 0, min: 40 },
+            { grade: 'FF', points: 0, min: 0 },
+            
+        ];
+
+        function showNotification(msg) {
+            const el = document.getElementById('notification');
+            document.getElementById('notificationText').innerText = msg;
+            el.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => el.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        function addCourse() {
+            const newCourse = {
+                id: Date.now(),
+                code: '',
+                name: 'New Course',
+                credits: 3,
+                assessments: [
+                    { name: 'IA 1', weight: 15, marks: 0 },
+                    { name: 'IA 2', weight: 15, marks: 0 },
+                    { name: 'Mid Sem', weight: 20, marks: 0 },
+                    { name: 'End Sem', weight: 50, marks: 0 }
+                ]
+            };
+            courses.push(newCourse);
+            render();
+            showNotification('New course added');
+        }
+
+        function deleteCourse(id) {
+            courses = courses.filter(c => c.id !== id);
+            render();
+            updateCalculations();
+        }
+
+        function updateMark(courseId, assessmentIndex, value) {
+            const course = courses.find(c => c.id === courseId);
+            const num = parseFloat(value) || 0;
+            const max = course.assessments[assessmentIndex].weight;
+            course.assessments[assessmentIndex].marks = Math.min(num, max);
+            render();
+            updateCalculations();
+        }
+
+        function getCourseStats(course) {
+            const totalWeight = course.assessments.reduce((acc, curr) => acc + curr.weight, 0);
+            const currentTotalMarks = course.assessments.reduce((acc, curr) => acc + curr.marks, 0);
+            
+            // Calculate Current Grade based on current performance scaled to 100
+            const percentage = (currentTotalMarks / totalWeight) * 100;
+            const gradeObj = gradingScale.find(g => percentage >= g.min) || gradingScale[gradingScale.length - 1];
+            
+            return { percentage, currentTotalMarks, grade: gradeObj.grade, points: gradeObj.points };
+        }
+
+        function updateCalculations() {
+            let totalWeightedPoints = 0;
+            let totalCredits = 0;
+
+            courses.forEach(c => {
+                const stats = getCourseStats(c);
+                totalWeightedPoints += (stats.points * c.credits);
+                totalCredits += c.credits;
+            });
+
+            const gpa = totalCredits > 0 ? (totalWeightedPoints / totalCredits) : 0;
+            document.getElementById('currentGPA').innerText = gpa.toFixed(2);
+            document.getElementById('gpaProgress').style.width = (gpa * 10) + '%';
+            
+            // Forecast logic
+            const target = parseFloat(document.getElementById('targetGPA').value) || 0;
+            const forecastBox = document.getElementById('forecastSummary');
+            
+            if (courses.length > 0) {
+                forecastBox.classList.remove('hidden');
+                if (gpa >= target) {
+                    forecastBox.querySelector('p').innerText = "You are currently on track to exceed your target! Maintain your current performance.";
+                } else {
+                    const diff = target - gpa;
+                    forecastBox.querySelector('p').innerText = `To reach ${target}, you need to improve your overall average by approximately ${diff.toFixed(2)} grade points.`;
+                }
+            }
+        }
+
+        function render() {
+            const container = document.getElementById('courseContainer');
+            container.innerHTML = '';
+
+            courses.forEach(course => {
+                const stats = getCourseStats(course);
+                const courseEl = document.createElement('div');
+                courseEl.className = 'card p-6 animate-in fade-in slide-in-from-bottom-2 duration-300';
+                
+                let assessmentsHtml = course.assessments.map((a, i) => `
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">${a.name} (${a.weight})</label>
+                        <input type="number" 
+                               value="${a.marks}" 
+                               oninput="updateMark(${course.id}, ${i}, this.value)"
+                               class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                               max="${a.weight}">
+                    </div>
+                `).join('');
+
+                courseEl.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase">${course.code || 'CODE'}</span>
+                            <h3 class="text-lg font-bold text-slate-800 mt-1">${course.name}</h3>
+                            <p class="text-xs text-slate-500">${course.credits} Credits</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-2xl font-black text-slate-700">${stats.currentTotalMarks.toFixed(1)}</span>
+                            <span class="text-xs font-bold text-slate-400 block">TOTAL MARKS</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        ${assessmentsHtml}
+                    </div>
+
+                    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                        <div class="flex gap-2">
+                             <div class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold">
+                                Grade: ${stats.grade}
+                             </div>
+                        </div>
+                        <button onclick="deleteCourse(${course.id})" class="text-slate-400 hover:text-red-500 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(courseEl);
+            });
+        }
+
+        // Initialize
+        render();
+        updateCalculations();
+    </script>
+</body>
+</html>
