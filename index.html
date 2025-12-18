@@ -1,403 +1,577 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GPA Calculator & Forecaster</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-        }
-        .card {
-            background: white;
-            border-radius: 1.25rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .card:hover {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-        .fail-border {
-            border: 2px solid #ef4444;
-            background-color: #fef2f2;
-        }
-        .input-focus:focus {
-            ring: 2px;
-            ring-color: #6366f1;
-            outline: none;
-            border-color: #6366f1;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f8fafc;
+      }
+      .card {
+        background: white;
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+          0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+      .fail-border {
+        border: 2px solid #ef4444;
+        background-color: #fef2f2;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
     </style>
-</head>
-<body class="p-4 md:p-8 min-h-screen">
+  </head>
+  <body class="p-4 md:p-8 min-h-screen">
     <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <header class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Academic Forecaster</h1>
-                <p class="text-slate-500 mt-2 font-medium flex items-center gap-2">
-                    <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                    Passing Rule: Min 40% (20/50) in Combined IA & MSE
-                </p>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="addCourse()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg shadow-indigo-200 active:scale-95">
-                    + Add Course
-                </button>
-            </div>
-        </header>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Left: Course Management -->
-            <div class="lg:col-span-8 space-y-6">
-                <div id="courseContainer" class="space-y-6">
-                    <!-- Course Cards will be rendered here -->
-                </div>
-            </div>
-
-            <!-- Right: Performance & AI -->
-            <div class="lg:col-span-4 space-y-6">
-                <!-- GPA Summary -->
-                <div class="card p-8 border border-slate-100">
-                    <h2 class="text-xl font-bold text-slate-800 mb-6">Performance Scorecard</h2>
-                    
-                    <div class="space-y-6">
-                        <div class="text-center p-6 bg-slate-50 rounded-3xl border border-slate-100">
-                            <span class="text-sm font-bold text-slate-400 uppercase tracking-widest block mb-1">Target SGPA</span>
-                            <input type="number" id="targetGPA" value="8.0" step="0.1" min="0" max="10" 
-                                   class="text-4xl font-black text-slate-800 bg-transparent text-center w-full focus:outline-none"
-                                   onchange="updateCalculations()">
-                        </div>
-
-                        <div class="relative pt-2">
-                            <div class="flex justify-between items-end mb-2">
-                                <span class="text-sm font-bold text-slate-500">Current SGPA</span>
-                                <span id="currentGPA" class="text-4xl font-black text-indigo-600">0.00</span>
-                            </div>
-                            <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
-                                <div id="gpaProgress" class="bg-indigo-500 h-full transition-all duration-700 ease-out" style="width: 0%"></div>
-                            </div>
-                        </div>
-
-                        <div id="forecastSummary" class="p-4 rounded-2xl border transition-all text-sm font-medium leading-relaxed">
-                            <!-- Summary text injected here -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- AI Preparation Tips -->
-                <div class="card p-8 border border-slate-100 bg-indigo-900 text-white overflow-hidden relative">
-                    <div class="absolute top-0 right-0 p-4 opacity-10">
-                        <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    </div>
-                    
-                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2 relative z-10">
-                        <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                        AI Study Guide
-                    </h2>
-                    
-                    <div id="aiSection" class="relative z-10">
-                        <p class="text-indigo-200 text-sm mb-6">Get syllabus-specific tips for Calculus and Differential Equations.</p>
-                        <button id="tipsBtn" onclick="generateStudyTips()" class="w-full py-4 bg-white text-indigo-900 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-all active:scale-95">
-                            GENERATE TIPS
-                        </button>
-                    </div>
-
-                    <div id="tipsContainer" class="mt-4 space-y-3 hidden max-h-80 overflow-y-auto custom-scrollbar pr-2 relative z-10">
-                        <!-- Tips will appear here -->
-                    </div>
-                </div>
-            </div>
+      <!-- Header -->
+      <header
+        class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6"
+      >
+        <div>
+          <h1
+            class="text-4xl font-extrabold text-slate-900 tracking-tight text-center md:text-left"
+          >
+            Academic Forecaster
+          </h1>
+          <p
+            class="text-slate-500 mt-2 font-medium flex items-center justify-center md:justify-start gap-2"
+          >
+            <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            Passing Rule: Min 40% (20/50) in Combined Scaled IA & MSE
+          </p>
         </div>
+        <div class="flex justify-center gap-3">
+          <button
+            onclick="addCourse()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg shadow-indigo-200 active:scale-95"
+          >
+            + Add Course
+          </button>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Left: Course Management -->
+        <div class="lg:col-span-8 space-y-6">
+          <div id="courseContainer" class="space-y-6">
+            <!-- Course Cards will be rendered here -->
+          </div>
+        </div>
+
+        <!-- Right: Performance & AI -->
+        <div class="lg:col-span-4 space-y-6">
+          <!-- GPA Summary -->
+          <div class="card p-8 border border-slate-100">
+            <h2 class="text-xl font-bold text-slate-800 mb-6">
+              Performance Scorecard
+            </h2>
+
+            <div class="space-y-6">
+              <div
+                class="text-center p-6 bg-slate-50 rounded-3xl border border-slate-100"
+              >
+                <span
+                  class="text-sm font-bold text-slate-400 uppercase tracking-widest block mb-1"
+                  >Target SGPA</span
+                >
+                <input
+                  type="number"
+                  id="targetGPA"
+                  value="8.0"
+                  step="0.1"
+                  min="0"
+                  max="10"
+                  class="text-4xl font-black text-slate-800 bg-transparent text-center w-full focus:outline-none"
+                  onchange="updateCalculations()"
+                />
+              </div>
+
+              <div class="relative pt-2">
+                <div class="flex justify-between items-end mb-2">
+                  <span class="text-sm font-bold text-slate-500"
+                    >Current SGPA</span
+                  >
+                  <span
+                    id="currentGPA"
+                    class="text-4xl font-black text-indigo-600"
+                    >0.00</span
+                  >
+                </div>
+                <div
+                  class="w-full bg-slate-100 rounded-full h-4 overflow-hidden"
+                >
+                  <div
+                    id="gpaProgress"
+                    class="bg-indigo-500 h-full transition-all duration-700 ease-out"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+
+              <div
+                id="forecastSummary"
+                class="p-4 rounded-2xl border transition-all text-sm font-medium leading-relaxed hidden"
+              >
+                <!-- Summary text injected here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Preparation Tips -->
+          <div
+            class="card p-8 border border-slate-100 bg-indigo-900 text-white overflow-hidden relative"
+          >
+            <div class="absolute top-0 right-0 p-4 opacity-10">
+              <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+
+            <h2
+              class="text-xl font-bold mb-4 flex items-center gap-2 relative z-10"
+            >
+              <svg
+                class="w-6 h-6 text-indigo-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                />
+              </svg>
+              AI Study Guide
+            </h2>
+
+            <div id="aiSection" class="relative z-10">
+              <p class="text-indigo-200 text-sm mb-6">
+                Get syllabus-specific tips for Calculus and Differential
+                Equations.
+              </p>
+              <button
+                id="tipsBtn"
+                onclick="generateStudyTips()"
+                class="w-full py-4 bg-white text-indigo-900 rounded-2xl font-black text-sm hover:bg-indigo-50 transition-all active:scale-95"
+              >
+                GENERATE TIPS
+              </button>
+            </div>
+
+            <div
+              id="tipsContainer"
+              class="mt-4 space-y-3 hidden max-h-80 overflow-y-auto custom-scrollbar pr-2 relative z-10"
+            >
+              <!-- Tips injected here -->
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Feedback Message -->
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 opacity-0 transition-all duration-300 bg-slate-900 text-white px-8 py-4 rounded-3xl shadow-2xl z-50 pointer-events-none flex items-center gap-3">
-        <div id="toastIcon" class="p-1 bg-indigo-500 rounded-full">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-        </div>
-        <span id="toastText" class="font-bold text-sm"></span>
+    <div
+      id="toast"
+      class="fixed bottom-8 left-1/2 -translate-x-1/2 opacity-0 transition-all duration-300 bg-slate-900 text-white px-8 py-4 rounded-3xl shadow-2xl z-50 pointer-events-none flex items-center gap-3"
+    >
+      <div id="toastIcon" class="p-1 bg-indigo-500 rounded-full">
+        <svg
+          class="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="3"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+      </div>
+      <span id="toastText" class="font-bold text-sm"></span>
     </div>
 
     <script>
-        const apiKey = ""; // Runtime provided
-        const model = "gemini-2.5-flash-preview-09-2025";
+      const apiKey = "";
+      const model = "gemini-2.5-flash-preview-09-2025";
 
-        let courses = [
+      let courses = [
+        {
+          id: Date.now(),
+          code: "2301101T",
+          name: "Calculus and Differential Equations",
+          credits: 3,
+          dynamicIAs: [
+            { id: 1, name: "IA 1", marks: 0, max: 20 },
+            { id: 2, name: "IA 2", marks: 0, max: 20 },
+          ],
+          mseMarks: 0,
+          eseMarks: 0,
+          syllabusContext:
+            "Units: Partial Differentiation (Euler's), Jacobian (Maxima/Minima), ODE 1st Order (Exact/Linear), Applications (Cooling/Circuits), Higher Order DE (Variation of Parameters), PDE (Charpit's Method).",
+        },
+      ];
+
+      const gradingScale = [
+        { grade: "O", points: 10, min: 80 },
+        { grade: "A+", points: 9, min: 70 },
+        { grade: "A", points: 8, min: 60 },
+        { grade: "B+", points: 7, min: 55 },
+        { grade: "B", points: 6, min: 50 },
+        { grade: "C", points: 5, min: 45 },
+        { grade: "P", points: 4, min: 40 },
+        { grade: "F", points: 0, min: 0 },
+      ];
+
+      function showToast(msg, isError = false) {
+        const toast = document.getElementById("toast");
+        document.getElementById("toastText").innerText = msg;
+        document.getElementById("toastIcon").className = isError
+          ? "p-1 bg-red-500 rounded-full"
+          : "p-1 bg-indigo-500 rounded-full";
+        toast.classList.remove("opacity-0", "translate-y-4");
+        toast.classList.add("opacity-100", "-translate-y-4");
+        setTimeout(() => {
+          toast.classList.add("opacity-0", "translate-y-4");
+          toast.classList.remove("opacity-100", "-translate-y-4");
+        }, 3000);
+      }
+
+      async function generateStudyTips() {
+        const btn = document.getElementById("tipsBtn");
+        const container = document.getElementById("tipsContainer");
+
+        btn.disabled = true;
+        btn.innerHTML =
+          '<svg class="animate-spin h-5 w-5 mx-auto" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+        const course = courses[0];
+        const prompt = `Student needs help preparing for Calculus (2301101T). Syllabus: ${course.syllabusContext}. Provide 6 concise, actionable tips for IA, MSE, and ESE. Format JSON: { "tips": ["..."] }`;
+
+        try {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
             {
-                id: Date.now(),
-                code: '2301101T',
-                name: 'Calculus and Differential Equations',
-                credits: 3,
-                assessments: [
-                    { name: 'IA 1', weight: 15, marks: 0, isInternal: true },
-                    { name: 'IA 2', weight: 15, marks: 0, isInternal: true },
-                    { name: 'Mid Sem', weight: 20, marks: 0, isInternal: true },
-                    { name: 'End Sem', weight: 50, marks: 0, isInternal: false }
-                ],
-                syllabusContext: "Units: Partial Differentiation (Euler's), Jacobian (Maxima/Minima), ODE 1st Order (Exact/Linear), Applications (Cooling/Circuits), Higher Order DE (Variation of Parameters), PDE (Charpit's Method)."
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" },
+              }),
             }
-        ];
+          );
 
-        // Updated grading system based on your institution's rules (from screenshot)
-        const gradingScale = [
-            { grade: 'O', points: 10, min: 80 },
-            { grade: 'A+', points: 9, min: 70 },
-            { grade: 'A', points: 8, min: 60 },
-            { grade: 'B+', points: 7, min: 55 },
-            { grade: 'B', points: 6, min: 50 },
-            { grade: 'C', points: 5, min: 45 },
-            { grade: 'P', points: 4, min: 40 },
-            { grade: 'F', points: 0, min: 0 }
-        ];
+          const result = await response.json();
+          const data = JSON.parse(result.candidates[0].content.parts[0].text);
 
-        function showToast(msg, isError = false) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastText').innerText = msg;
-            document.getElementById('toastIcon').className = isError ? 'p-1 bg-red-500 rounded-full' : 'p-1 bg-indigo-500 rounded-full';
-            toast.classList.remove('opacity-0', 'translate-y-4');
-            toast.classList.add('opacity-100', '-translate-y-4');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-4');
-                toast.classList.remove('opacity-100', '-translate-y-4');
-            }, 3000);
-        }
-
-        async function generateStudyTips() {
-            const btn = document.getElementById('tipsBtn');
-            const container = document.getElementById('tipsContainer');
-            const originalText = btn.innerText;
-
-            btn.disabled = true;
-            btn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-
-            const course = courses[0];
-            const prompt = `Student needs help preparing for Calculus (2301101T). 
-            Syllabus: ${course.syllabusContext}.
-            Exams: IA (30 marks total), MSE (20 marks), ESE (50 marks).
-            Provide 6 concise, actionable, and technical preparation tips.
-            Format as JSON: { "tips": ["string", "string", ...] }`;
-
-            try {
-                let retries = 5;
-                let result;
-                for (let i = 0; i < retries; i++) {
-                    try {
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ parts: [{ text: prompt }] }],
-                                generationConfig: { responseMimeType: "application/json" }
-                            })
-                        });
-                        if (response.ok) {
-                            result = await response.json();
-                            break;
-                        }
-                    } catch (e) {}
-                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
-                }
-
-                const data = JSON.parse(result.candidates[0].content.parts[0].text);
-                container.innerHTML = data.tips.map(tip => `
+          container.innerHTML = data.tips
+            .map(
+              (tip) => `
                     <div class="p-4 bg-indigo-800/50 rounded-2xl border border-indigo-700/50 text-xs font-medium leading-relaxed">
                         ${tip}
                     </div>
-                `).join('');
-                
-                container.classList.remove('hidden');
-                btn.innerText = "REFRESH TIPS";
-                btn.disabled = false;
-                showToast("Tips generated successfully!");
+                `
+            )
+            .join("");
 
-            } catch (err) {
-                showToast("AI Assistant currently unavailable.", true);
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
+          container.classList.remove("hidden");
+          btn.innerText = "REFRESH TIPS";
+          btn.disabled = false;
+          showToast("Tips generated!");
+        } catch (err) {
+          showToast("AI unreachable.", true);
+          btn.disabled = false;
+          btn.innerText = "GENERATE TIPS";
         }
+      }
 
-        function addCourse() {
-            courses.push({
-                id: Date.now(),
-                code: '',
-                name: 'New Course',
-                credits: 3,
-                assessments: [
-                    { name: 'IA 1', weight: 15, marks: 0, isInternal: true },
-                    { name: 'IA 2', weight: 15, marks: 0, isInternal: true },
-                    { name: 'Mid Sem', weight: 20, marks: 0, isInternal: true },
-                    { name: 'End Sem', weight: 50, marks: 0, isInternal: false }
-                ]
-            });
-            render();
-            updateCalculations();
-            showToast("Course added to list");
+      function addCourse() {
+        courses.push({
+          id: Date.now(),
+          code: "",
+          name: "New Course",
+          credits: 3,
+          dynamicIAs: [{ id: Date.now(), name: "IA 1", marks: 0, max: 20 }],
+          mseMarks: 0,
+          eseMarks: 0,
+        });
+        render();
+        updateCalculations();
+      }
+
+      function addIA(courseId) {
+        const course = courses.find((c) => c.id === courseId);
+        course.dynamicIAs.push({
+          id: Date.now(),
+          name: `IA ${course.dynamicIAs.length + 1}`,
+          marks: 0,
+          max: 20,
+        });
+        render();
+        updateCalculations();
+      }
+
+      function removeIA(courseId, iaId) {
+        const course = courses.find((c) => c.id === courseId);
+        if (course.dynamicIAs.length > 1) {
+          course.dynamicIAs = course.dynamicIAs.filter((ia) => ia.id !== iaId);
+          render();
+          updateCalculations();
+        } else {
+          showToast("Min 1 component required.", true);
         }
+      }
 
-        function deleteCourse(id) {
-            courses = courses.filter(c => c.id !== id);
-            render();
-            updateCalculations();
+      function updateIAMark(courseId, iaId, field, value) {
+        const course = courses.find((c) => c.id === courseId);
+        const ia = course.dynamicIAs.find((i) => i.id === iaId);
+        ia[field] = Math.max(0, parseFloat(value) || 0);
+        render();
+        updateCalculations();
+      }
+
+      function updateMainExam(courseId, field, value) {
+        const course = courses.find((c) => c.id === courseId);
+        course[field] = Math.max(0, parseFloat(value) || 0);
+        render();
+        updateCalculations();
+      }
+
+      function getCourseStats(course) {
+        const rawIAMarks = course.dynamicIAs.reduce(
+          (acc, curr) => acc + curr.marks,
+          0
+        );
+        const totalIAMax = course.dynamicIAs.reduce(
+          (acc, curr) => acc + curr.max,
+          0
+        );
+        const scaledIA = totalIAMax > 0 ? (rawIAMarks / totalIAMax) * 30 : 0;
+
+        const mse = Math.min(course.mseMarks, 20);
+        const ese = Math.min(course.eseMarks, 50);
+
+        const internalSum = scaledIA + mse;
+        const totalMarks = scaledIA + mse + ese;
+
+        const isInternalFail = internalSum < 20;
+        const gradeObj = isInternalFail
+          ? { grade: "F (INT FAIL)", points: 0 }
+          : gradingScale.find((g) => Math.round(totalMarks) >= g.min) ||
+            gradingScale[gradingScale.length - 1];
+
+        return {
+          totalMarks,
+          internalSum,
+          isInternalFail,
+          grade: gradeObj.grade,
+          points: gradeObj.points,
+          scaledIA,
+        };
+      }
+
+      function updateCalculations() {
+        let totalWeightedPoints = 0;
+        let totalCredits = 0;
+        let hasInternalFail = false;
+
+        courses.forEach((c) => {
+          const stats = getCourseStats(c);
+          totalWeightedPoints += stats.points * c.credits;
+          totalCredits += c.credits;
+          if (stats.isInternalFail) hasInternalFail = true;
+        });
+
+        const gpa = totalCredits > 0 ? totalWeightedPoints / totalCredits : 0;
+        document.getElementById("currentGPA").innerText = gpa.toFixed(2);
+        document.getElementById("gpaProgress").style.width = gpa * 10 + "%";
+
+        const target =
+          parseFloat(document.getElementById("targetGPA").value) || 0;
+        const summaryBox = document.getElementById("forecastSummary");
+
+        if (courses.length > 0) {
+          summaryBox.classList.remove("hidden");
+          if (hasInternalFail) {
+            summaryBox.className =
+              "mt-6 p-4 rounded-2xl border border-red-200 bg-red-50 text-red-700 font-bold";
+            summaryBox.innerText = "Internal Failure! Scaled IA + MSE < 20.";
+          } else if (gpa >= target) {
+            summaryBox.className =
+              "mt-6 p-4 rounded-2xl border border-green-200 bg-green-50 text-green-700 font-bold";
+            summaryBox.innerText = `On target (${target.toFixed(1)})!`;
+          } else {
+            summaryBox.className =
+              "mt-6 p-4 rounded-2xl border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold";
+            summaryBox.innerText = `Need +${(target - gpa).toFixed(
+              2
+            )} pts to reach goal.`;
+          }
         }
+      }
 
-        function updateMark(courseId, assessmentIndex, value) {
-            const course = courses.find(c => c.id === courseId);
-            const num = parseFloat(value) || 0;
-            const max = course.assessments[assessmentIndex].weight;
-            course.assessments[assessmentIndex].marks = Math.min(Math.max(0, num), max);
-            render();
-            updateCalculations();
-        }
+      function render() {
+        const container = document.getElementById("courseContainer");
+        container.innerHTML = "";
 
-        function getCourseStats(course) {
-            const internalMarks = course.assessments
-                .filter(a => a.isInternal)
-                .reduce((acc, curr) => acc + curr.marks, 0);
-            
-            const internalWeight = course.assessments
-                .filter(a => a.isInternal)
-                .reduce((acc, curr) => acc + curr.weight, 0);
+        courses.forEach((course) => {
+          const stats = getCourseStats(course);
+          const card = document.createElement("div");
+          card.className = `card p-6 md:p-8 border ${
+            stats.isInternalFail ? "fail-border" : "border-slate-100"
+          }`;
 
-            const totalMarks = course.assessments.reduce((acc, curr) => acc + curr.marks, 0);
-            
-            // Failure logic: Combined IA + MSE must be >= 40% (20 marks)
-            const isInternalFail = internalMarks < (internalWeight * 0.4);
-            
-            let gradeObj;
-            if (isInternalFail) {
-                gradeObj = { grade: 'F (INT FAIL)', points: 0 };
-            } else {
-                // Find highest grade matching the total marks
-                gradeObj = gradingScale.find(g => Math.round(totalMarks) >= g.min) || gradingScale[gradingScale.length - 1];
-            }
-            
-            return { totalMarks, internalMarks, internalWeight, isInternalFail, grade: gradeObj.grade, points: gradeObj.points };
-        }
-
-        function updateCalculations() {
-            let totalWeightedPoints = 0;
-            let totalCredits = 0;
-            let hasInternalFail = false;
-
-            courses.forEach(c => {
-                const stats = getCourseStats(c);
-                totalWeightedPoints += (stats.points * c.credits);
-                totalCredits += c.credits;
-                if (stats.isInternalFail) hasInternalFail = true;
-            });
-
-            const gpa = totalCredits > 0 ? (totalWeightedPoints / totalCredits) : 0;
-            const currentGPAEl = document.getElementById('currentGPA');
-            currentGPAEl.innerText = gpa.toFixed(2);
-            document.getElementById('gpaProgress').style.width = (gpa * 10) + '%';
-            
-            const target = parseFloat(document.getElementById('targetGPA').value) || 0;
-            const summaryBox = document.getElementById('forecastSummary');
-            
-            if (courses.length === 0) {
-                summaryBox.className = "hidden";
-                return;
-            }
-
-            summaryBox.classList.remove('hidden');
-            if (hasInternalFail) {
-                summaryBox.className = "mt-6 p-4 rounded-2xl border border-red-200 bg-red-50 text-red-700 font-bold";
-                summaryBox.innerText = "Critical: One or more courses have failed the internal minimum (20 marks total). This overrides the final grade to F.";
-            } else if (gpa >= target) {
-                summaryBox.className = "mt-6 p-4 rounded-2xl border border-green-200 bg-green-50 text-green-700 font-bold";
-                summaryBox.innerText = `On Track! You are currently meeting or exceeding your target GPA of ${target.toFixed(1)}.`;
-            } else {
-                summaryBox.className = "mt-6 p-4 rounded-2xl border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold";
-                summaryBox.innerText = `Gap Analysis: You need to improve by ${(target - gpa).toFixed(2)} points. Focus on upcoming End Sem exams.`;
-            }
-        }
-
-        function render() {
-            const container = document.getElementById('courseContainer');
-            container.innerHTML = '';
-
-            courses.forEach(course => {
-                const stats = getCourseStats(course);
-                const card = document.createElement('div');
-                card.className = `card p-8 border ${stats.isInternalFail ? 'fail-border' : 'border-slate-100'}`;
-                
-                let assessmentsHtml = course.assessments.map((a, i) => `
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black ${a.isInternal ? 'text-indigo-500' : 'text-slate-400'} uppercase tracking-widest">
-                            ${a.name} (Max ${a.weight})
-                        </label>
-                        <input type="number" value="${a.marks}" oninput="updateMark(${course.id}, ${i}, this.value)"
-                               class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+          let iasHtml = course.dynamicIAs
+            .map(
+              (ia) => `
+                    <div class="flex items-center gap-2 group">
+                        <div class="flex-1 space-y-1">
+                            <input type="text" value="${ia.name}" class="text-[10px] font-black text-indigo-400 uppercase tracking-widest bg-transparent border-none p-0 w-full focus:ring-0"
+                                   onchange="const c = courses.find(x=>x.id===${course.id}); const i = c.dynamicIAs.find(y=>y.id===${ia.id}); i.name=this.value; render();">
+                            <div class="flex items-center gap-1">
+                                <input type="number" value="${ia.marks}" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:ring-1 focus:ring-indigo-500 outline-none"
+                                       oninput="updateIAMark(${course.id}, ${ia.id}, 'marks', this.value)">
+                                <span class="text-slate-300 text-xs font-bold">/</span>
+                                <input type="number" value="${ia.max}" class="w-16 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:ring-1 focus:ring-indigo-500 outline-none"
+                                       oninput="updateIAMark(${course.id}, ${ia.id}, 'max', this.value)">
+                            </div>
+                        </div>
+                        <button onclick="removeIA(${course.id}, ${ia.id})" class="text-slate-200 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
                     </div>
-                `).join('');
+                `
+            )
+            .join("");
 
-                card.innerHTML = `
+          card.innerHTML = `
                     <div class="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-2">
-                                <span class="text-[10px] font-black bg-slate-900 text-white px-2 py-0.5 rounded uppercase tracking-widest">
-                                    ${course.code || 'CODE'}
-                                </span>
-                                ${stats.isInternalFail ? '<span class="text-[10px] font-black bg-red-600 text-white px-2 py-0.5 rounded uppercase">INTERNAL FAIL</span>' : ''}
+                                <span class="text-[10px] font-black bg-slate-900 text-white px-2 py-0.5 rounded uppercase">${
+                                  course.code || "CODE"
+                                }</span>
+                                ${
+                                  stats.isInternalFail
+                                    ? '<span class="text-[10px] font-black bg-red-600 text-white px-2 py-0.5 rounded uppercase">INT FAIL</span>'
+                                    : ""
+                                }
                             </div>
-                            <input type="text" value="${course.name}" class="text-2xl font-black text-slate-800 bg-transparent border-none p-0 focus:ring-0 w-full block" 
-                                   onchange="const c = courses.find(x=>x.id===${course.id}); c.name=this.value; render();">
-                            
-                            <div class="flex items-center gap-4 mt-3">
+                            <input type="text" value="${
+                              course.name
+                            }" class="text-2xl font-black text-slate-800 bg-transparent border-none p-0 focus:ring-0 w-full block" 
+                                   onchange="const c = courses.find(x=>x.id===${
+                                     course.id
+                                   }); c.name=this.value; render();">
+                            <div class="flex flex-wrap items-center gap-4 mt-3">
                                 <div class="flex items-center gap-1.5 text-xs font-bold text-slate-400">
                                     <span>Credits:</span>
-                                    <input type="number" value="${course.credits}" class="w-8 bg-slate-100 rounded text-slate-700 text-center border-none focus:ring-0"
-                                           onchange="const c = courses.find(x=>x.id===${course.id}); c.credits=parseInt(this.value); render(); updateCalculations();">
+                                    <input type="number" value="${
+                                      course.credits
+                                    }" class="w-8 bg-slate-100 rounded text-slate-700 text-center border-none focus:ring-0"
+                                           onchange="const c = courses.find(x=>x.id===${
+                                             course.id
+                                           }); c.credits=parseInt(this.value); render(); updateCalculations();">
                                 </div>
-                                <div class="text-[10px] font-bold ${stats.isInternalFail ? 'text-red-600' : 'text-indigo-500'} bg-opacity-10 uppercase tracking-tighter">
-                                    Internal Progress: ${stats.internalMarks.toFixed(1)} / ${stats.internalWeight}
+                                <div class="text-[10px] font-bold ${
+                                  stats.isInternalFail
+                                    ? "text-red-600"
+                                    : "text-indigo-500"
+                                } uppercase">
+                                    Internal: ${stats.internalSum.toFixed(
+                                      1
+                                    )} / 50.0 (Scaled)
                                 </div>
                             </div>
                         </div>
                         <div class="bg-indigo-50 border border-indigo-100 p-6 rounded-3xl min-w-[140px] text-center">
-                            <span class="text-4xl font-black text-indigo-700 block leading-none mb-1">${stats.totalMarks.toFixed(1)}</span>
+                            <span class="text-4xl font-black text-indigo-700 block leading-none mb-1">${stats.totalMarks.toFixed(
+                              1
+                            )}</span>
                             <span class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">AGGREGATE</span>
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        ${assessmentsHtml}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                        <div class="col-span-1 md:col-span-2">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest">Internal Components (Scaled to 30)</h4>
+                                <button onclick="addIA(${
+                                  course.id
+                                })" class="text-[10px] font-black text-indigo-600 hover:text-indigo-800 uppercase">+ Add IA</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${iasHtml}</div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Mid Sem (Max 20)</label>
+                                <input type="number" value="${
+                                  course.mseMarks
+                                }" oninput="updateMainExam(${
+            course.id
+          }, 'mseMarks', this.value)"
+                                       class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">End Sem (Max 50)</label>
+                                <input type="number" value="${
+                                  course.eseMarks
+                                }" oninput="updateMainExam(${
+            course.id
+          }, 'eseMarks', this.value)"
+                                       class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex items-center justify-between pt-6 border-t border-slate-100">
-                        <div class="flex items-center gap-4">
-                            <div class="px-5 py-2 ${stats.isInternalFail ? 'bg-red-600 shadow-red-200' : 'bg-indigo-600 shadow-indigo-200'} text-white rounded-2xl text-xs font-black shadow-lg uppercase tracking-widest">
-                                GRADE: ${stats.grade}
-                            </div>
+                        <div class="px-5 py-2 ${
+                          stats.isInternalFail ? "bg-red-600" : "bg-indigo-600"
+                        } text-white rounded-2xl text-xs font-black uppercase shadow-lg">
+                            GRADE: ${stats.grade}
                         </div>
-                        <button onclick="deleteCourse(${course.id})" class="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all">
+                        <button onclick="deleteCourse(${
+                          course.id
+                        })" class="p-3 text-slate-300 hover:text-red-500 transition-all">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                     </div>
                 `;
-                container.appendChild(card);
-            });
-        }
+          container.appendChild(card);
+        });
+      }
 
-        window.onload = () => {
-            render();
-            updateCalculations();
-        };
+      window.onload = () => {
+        render();
+        updateCalculations();
+      };
     </script>
-</body>
+  </body>
 </html>
